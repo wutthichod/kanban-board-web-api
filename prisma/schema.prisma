@@ -14,7 +14,7 @@ model User {
   password      String
   boards        Board[]        @relation("BoardOwner")
   collaborateIn Board[]        @relation("BoardCollaborator")
-  assignedCards CardAssignee[]
+  assignedCards TaskAssignee[]
 }
 
 model Board {
@@ -45,10 +45,10 @@ model Task{
   createdAt   DateTime       @default(now())
   column      Column         @relation(fields: [columnId], references: [id])
   columnId    Int
-  assignees   CardAssignee[]
+  assignees   TaskAssignee[]
 }
 
-model CardAssignee {
+model TaskAssignee {
   task  Task @relation(fields: [taskId], references: [id])
   taskId Int
   user   User @relation(fields: [userId], references: [id])

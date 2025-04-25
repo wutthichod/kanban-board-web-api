@@ -3,7 +3,7 @@ import prisma from '../prismaClient.js'
 export async function createTask (req, res, next) {
 
     const userId = req.user.id;
-    const { title, description, dueDate, position, columnId } = req.body;
+    const { title, description, dueDate, position, columnId, taskAssignee } = req.body;
 
     try {
         const column = await prisma.column.findUnique({ where: { id: columnId } });
@@ -18,6 +18,9 @@ export async function createTask (req, res, next) {
                 dueDate,
                 position,
                 columnId,
+                assignees: {
+                    connect: taskAssignee.map(userId => ({ userId })),
+                }
             }
         });
 
@@ -41,7 +44,7 @@ export async function editTask (req, res, next) {
 
     const userId = req.user.id;
     const taskId = req.params.id;
-    const { title, position, columnId } = req.body;
+    const { title, position, columnId, taskAssignee } = req.body;
 
     try {
 
@@ -61,6 +64,11 @@ export async function editTask (req, res, next) {
         if (title !== undefined) updateData.title = title;
         if (position !== undefined) updateData.position = position;
         if (columnId !== undefined) updateData.columnId = columnId;
+        if (taskAssignee !== undefined) {
+            updateData.assignees = {
+                connect: taskAssignee.map(userId => ({ userId }))
+            };
+        }
 
         const updated = await prisma.task.update({
             where: { id: taskId },

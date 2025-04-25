@@ -8,13 +8,13 @@ export async function createColumn(req, res) {
   
     try {
 
-      await checkBoardOwnership(boardId, userId);
+        await checkBoardOwnership(boardId, userId);
+
+        const created = await prisma.column.create({
+            data: { name, position, boardId }
+        });
   
-      const created = await prisma.column.create({
-        data: { name, position, boardId }
-      });
-  
-      return res.status(201).json({ success: true, column: created });
+        return res.status(201).json({ success: true, column: created });
   
     } catch (error) {
         const status = error.message === "Access denied" ? 403 :
@@ -30,7 +30,7 @@ export async function updateColumn(req, res) {
 
     const userId = req.user.id;
     const columnId = parseInt(req.params.id, 10);
-    const { name, position } = req.body;
+    const { name } = req.body;
   
     try {
 
@@ -41,7 +41,7 @@ export async function updateColumn(req, res) {
   
         const updated = await prisma.column.update({
             where: { id: columnId },
-            data: { name, position }
+            data: { name }
         });
     
         return res.status(200).json({ success: true, column: updated });
