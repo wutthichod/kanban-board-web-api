@@ -33,10 +33,10 @@ model Column {
   position Int
   board    Board  @relation(fields: [boardId], references: [id])
   boardId  Int
-  cards    Card[]
+  tasks    Task[]
 }
 
-model Card {
+model Task{
   id          Int            @id @default(autoincrement())
   title       String
   description String?
@@ -49,10 +49,10 @@ model Card {
 }
 
 model CardAssignee {
-  card   Card @relation(fields: [cardId], references: [id])
-  cardId Int
+  task  Task @relation(fields: [taskId], references: [id])
+  taskId Int
   user   User @relation(fields: [userId], references: [id])
   userId Int
 
-  @@id([cardId, userId])
+  @@id([taskId, userId])
 }

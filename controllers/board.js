@@ -1,119 +1,168 @@
-export async function createColumn (req, res, next) {
+import prisma from "../prismaClient.js";
+import { checkBoardOwnership } from "./util.js";
+
+export async function getBoards (req, res, next) {
 
     const userId = req.user.id;
-    const { boardId, name, position } = req.body;
 
     try {
 
-            await checkBoardOwnership(boardId, userId);
+        const boards = await prisma.board.findMany({
+            where: {ownerId : userId},
+        });
 
-            const created = await prisma.column.create({
-                    data: {
-                            name,
-                            position,
-                            boardId
-                    }
+        if (boards.length === 0) {
+            return res.status(400).json({
+                success: true,
+                message: "User has not created any board"
             });
+        }
 
-            return res.status(201).json({
-                    success: true,
-                    column: created
-            });
+        return res.status(200).json({
+            success: true,
+            boards
+        });
 
     } catch (error) {
 
-            const status = error.message === "Access denied" ? 403 :
-                           error.message === "Board not found" ? 404 : 500;
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "GetBoard Error"
+        });
 
-            console.log(error);
-            return res.status(status).json({
-                    success: false,
-                    message: error.message
-            });
+    }
+}
 
+export async function getBoard (req, res, next) {
+    
+    const userId = req.user.id;
+    const boardId = parseInt(req.params.id, 10);
+
+    try {
+
+        await checkBoardOwnership(boardId, userId);
+
+        const board = await prisma.board.findUnique({
+            where: { id : boardId },
+        })
+
+        return res.status(200).json({
+            success: true,
+            board
+        });
+    } catch (error) {
+
+        const status = error.message === "Access denied" ? 403 :
+                       error.message === "Board not found" ? 404 : 500;
+
+        console.log(error);
+        return res.status(500).json({
+            sucess: false,
+            message: error.message,
+        })
     }
 
 }
 
-export async function updateColumn (req, res, next) {
-
+export async function createBoard (req, res, next) {
+    
     const userId = req.user.id;
-    const columnId = parseInt(req.params.id, 10);
-    const { name, position } = req.body;
+    const { name } = req.body;
 
     try {
 
-            const column = await prisma.column.findUnique({
-                    where: { id: columnId }
-            });
-
-            if (!column) {
-                    throw new Error("Column not found");
+        const created = await prisma.board.create({
+            data: {
+                ownerId : userId,
+                name
             }
+        });
 
-            await checkBoardOwnership(column.boardId, userId);
-
-            const updated = await prisma.column.update({
-                    where: { id: columnId },
-                    data: { name, position }
-            });
-
-            return res.status(200).json({
-                    success: true,
-                    column: updated
-            });
+        return res.status(200).json({
+            success: true,
+            created
+        });
 
     } catch (error) {
-
-            const status = error.message === "Access denied" ? 403 :
-                           error.message === "Board not found" || error.message === "Column not found" ? 404 : 500;
-
-            console.log(error);
-            return res.status(status).json({
-                    success: false,
-                    message: error.message
-            });
-
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Create board error"
+        });
     }
 
 }
 
-export async function deleteColumn (req, res, next) {
+
+export async function renameBoard (req, res, next) {
 
     const userId = req.user.id;
-    const columnId = parseInt(req.params.id, 10);
+    const boardId = parseInt(req.params.id, 10);
+    const { name } = req.body;
 
     try {
 
-            const column = await prisma.column.findUnique({
-                    where: { id: columnId }
-            });
+        await checkBoardOwnership(boardId, userId);
 
-            if (!column) {
-                    throw new Error("Column not found");
+        const updated = await prisma.board.update({
+            where: { 
+                id : boardId,
+            },
+            data: {
+                name : name,
             }
+        });
 
-            await checkBoardOwnership(column.boardId, userId);
-
-            const deleted = await prisma.column.delete({
-                    where: { id: columnId }
-            });
-
-            return res.status(200).json({
-                    success: true,
-                    column: deleted
-            });
+        return res.status(200).json({
+            success: true,
+            updated
+        })
 
     } catch (error) {
 
-            const status = error.message === "Access denied" ? 403 :
-                           error.message === "Board not found" || error.message === "Column not found" ? 404 : 500;
+        const status = error.message === "Access denied" ? 403 :
+                       error.message === "Board not found" ? 404 : 500;
 
-            console.log(error);
-            return res.status(status).json({
-                    success: false,
-                    message: error.message
-            });
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+
+}
+
+
+export async function deleteBoard (req, res, next) {
+    
+    const userId = req.user.id;
+    const boardId = parseInt(req.params.id, 10);
+
+    try {
+
+        await checkBoardOwnership(boardId, userId);
+
+        const deleted = await prisma.board.delete({
+            where: { id : boardId },
+        });
+
+        return res.status(200).json({
+            success: true,
+            deleted
+        });
+
+    } catch (error) {
+
+        const status = error.message === "Access denied" ? 403 :
+                   error.message === "Board not found" ? 404 : 500;
+
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });    
 
     }
+
 }
