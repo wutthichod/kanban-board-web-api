@@ -21,7 +21,7 @@ model Board {
   id             Int      @id @default(autoincrement())
   name           String
   createdAt      DateTime @default(now())
-  owner          User     @relation("BoardOwner", fields: [ownerId], references: [id])
+  owner          User     @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId        Int
   collaborator   User[]   @relation("BoardCollaborator")
   columns        Column[]
@@ -31,7 +31,7 @@ model Column {
   id       Int    @id @default(autoincrement())
   name     String
   position Int
-  board    Board  @relation(fields: [boardId], references: [id])
+  board    Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   boardId  Int
   tasks    Task[]
 }
@@ -43,15 +43,15 @@ model Task{
   dueDate     DateTime?
   position    Int
   createdAt   DateTime       @default(now())
-  column      Column         @relation(fields: [columnId], references: [id])
+  column      Column         @relation(fields: [columnId], references: [id], onDelete: Cascade)
   columnId    Int
   assignees   TaskAssignee[]
 }
 
 model TaskAssignee {
-  task  Task @relation(fields: [taskId], references: [id])
+  task  Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   taskId Int
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
 
   @@id([taskId, userId])

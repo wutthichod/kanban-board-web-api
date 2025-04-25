@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import prisma from '../prismaClient.js';
-import { UserRole } from '@prisma/client';
 
 export async function protect(req, res, next) {
     
@@ -28,34 +27,4 @@ export async function protect(req, res, next) {
     }
 }
 
-export async function authorize(req, res, next) {
-    
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: req.user.id },
-        });
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        if (user.role != UserRole.ADMIN) {
-            return res.status(403).json({
-                success: false,
-                message: user.role
-            });
-        }
-
-        next();
-
-
-    } catch (error) {
-        console.log('Authorization Error: ', error);
-        return res.status(403).json({
-            success: false,
-            message: 'Authorization failed'
-        });
-    }
-}
+export default protect;

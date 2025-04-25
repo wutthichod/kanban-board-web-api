@@ -8,7 +8,19 @@ export async function getBoards (req, res, next) {
     try {
 
         const boards = await prisma.board.findMany({
-            where: {ownerId : userId},
+            where: {
+                OR: [
+                    { ownerId: userId },
+                    { collaborator: { some: { id: userId } } }
+                ]
+            },
+            include: {
+                columns: {
+                    include: {
+                        tasks: true
+                    }
+                }
+            },
         });
 
         if (boards.length === 0) {
@@ -42,10 +54,17 @@ export async function getBoard (req, res, next) {
     try {
 
         await checkBoardOwnership(boardId, userId);
-
+        
         const board = await prisma.board.findUnique({
             where: { id : boardId },
-        })
+            include: {
+                columns: {
+                    include: {
+                        tasks: true
+                    }
+                }
+            },
+        });
 
         return res.status(200).json({
             success: true,
@@ -57,7 +76,7 @@ export async function getBoard (req, res, next) {
                        error.message === "Board not found" ? 404 : 500;
 
         console.log(error);
-        return res.status(500).json({
+        return res.status(status).json({
             sucess: false,
             message: error.message,
         })
@@ -125,7 +144,7 @@ export async function renameBoard (req, res, next) {
                        error.message === "Board not found" ? 404 : 500;
 
         console.log(error);
-        return res.status(500).json({
+        return res.status(status).json({
             success: false,
             message: error.message,
         });
@@ -158,7 +177,7 @@ export async function deleteBoard (req, res, next) {
                    error.message === "Board not found" ? 404 : 500;
 
         console.log(error);
-        return res.status(500).json({
+        return res.status(status).json({
             success: false,
             message: error.message,
         });    

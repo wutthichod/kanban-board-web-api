@@ -1,14 +1,16 @@
 import express from 'express'
-import { createColumn, updateColumn, deleteColumn } from '../controllers/column';
+import { createColumn, updateColumn, deleteColumn } from '../controllers/column.js';
 
 
 const router = express.Router();
 
 router
     .route('/')
-    .create(createColumn)
+    .post(createColumn)
 
 router
     .route('/:id')
     .put(updateColumn)
     .delete(deleteColumn)
+
+export default router;

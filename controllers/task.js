@@ -1,4 +1,5 @@
 import prisma from '../prismaClient.js'
+import { checkBoardOwnership } from './util.js';
 
 export async function createTask (req, res, next) {
 
@@ -13,16 +14,24 @@ export async function createTask (req, res, next) {
 
         const created = await prisma.task.create({
             data: {
-                title,
-                description,
-                dueDate,
-                position,
-                columnId,
-                assignees: {
-                    connect: taskAssignee.map(userId => ({ userId })),
-                }
+              title,
+              description,
+              dueDate,
+              position,
+              columnId,
             }
         });
+
+        if (Array.isArray(taskAssignee) && taskAssignee.length > 0) {
+            const assigneeData = taskAssignee.map(uid => ({
+                taskId: created.id,
+                userId: uid
+            }));
+      
+            await prisma.taskAssignee.createMany({
+                data: assigneeData
+            });
+        }
 
         return res.status(200).json({
             success: true,
@@ -43,7 +52,7 @@ export async function createTask (req, res, next) {
 export async function editTask (req, res, next) {
 
     const userId = req.user.id;
-    const taskId = req.params.id;
+    const taskId = parseInt(req.params.id, 10);
     const { title, position, columnId, taskAssignee } = req.body;
 
     try {
@@ -64,16 +73,30 @@ export async function editTask (req, res, next) {
         if (title !== undefined) updateData.title = title;
         if (position !== undefined) updateData.position = position;
         if (columnId !== undefined) updateData.columnId = columnId;
-        if (taskAssignee !== undefined) {
-            updateData.assignees = {
-                connect: taskAssignee.map(userId => ({ userId }))
-            };
-        }
 
         const updated = await prisma.task.update({
             where: { id: taskId },
             data: updateData
         });
+
+        if (Array.isArray(taskAssignee)) {
+            await prisma.taskAssignee.deleteMany({
+                where: { taskId: updated.id }
+            });
+        
+            if (taskAssignee.length > 0) {
+                const assigneeData = taskAssignee.map(uid => ({
+                    taskId: updated.id,
+                    userId: uid
+                }));
+        
+                await prisma.taskAssignee.createMany({
+                    data: assigneeData
+                });
+            }
+        }
+
+        
 
         return res.status(200).json({
             success: true,
@@ -94,7 +117,7 @@ export async function editTask (req, res, next) {
 
 export async function deleteTask (req, res, next) {
     const userId = req.user.id;
-    const taskId = req.params.id;
+    const taskId = parseInt(req.params.id);
 
     try {
 
