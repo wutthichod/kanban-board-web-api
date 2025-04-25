@@ -64,7 +64,7 @@ export async function editTask (req, res, next) {
 
         const updated = await prisma.task.update({
             where: { id: taskId },
-            data: updatedData
+            data: updateData
         });
 
         return res.status(200).json({
@@ -109,7 +109,7 @@ export async function deleteTask (req, res, next) {
             success: true,
             deleted,
         });
-        
+
     } catch (error) {
         const status = error.message === "Access denied" ? 403 :
                        error.message === "Column not found" ? 404 : 
