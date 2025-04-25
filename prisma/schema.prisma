@@ -36,7 +36,7 @@ model Column {
   tasks    Task[]
 }
 
-model Task{
+model Task {
   id          Int            @id @default(autoincrement())
   title       String
   description String?
